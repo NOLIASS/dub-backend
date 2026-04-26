@@ -1,11 +1,15 @@
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config()
 }
+
 const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
 
 const app = express()
+
+app.use(cors())
+app.use(express.json())
 
 const productSchema = new mongoose.Schema({
   title: String,
@@ -18,15 +22,13 @@ const productSchema = new mongoose.Schema({
   description: String,
 })
 
-app.use(cors())
-app.use(express.json())
+const Product = mongoose.model('Product', productSchema)
 
-// Підключення до MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('MongoDB підключено!')
 
-    await Product.deleteMany() // очищаємо стару базу
+    await Product.deleteMany()
     await Product.insertMany([
       {
         title: 'Стілець дубовий',
@@ -63,18 +65,6 @@ mongoose.connect(process.env.MONGO_URI)
   })
   .catch(err => console.log('Помилка:', err))
 
-// Схема товару
-const productSchema = new mongoose.Schema({
-  title: String,
-  price: Number,
-  category: String,
-  thumbnail: String,
-})
-
-// Модель товару
-const Product = mongoose.model('Product', productSchema)
-
-// Маршрути
 app.get('/products', async (req, res) => {
   const products = await Product.find()
   res.json(products)
@@ -95,4 +85,3 @@ app.post('/products', async (req, res) => {
 app.listen(process.env.PORT || 5000, () => {
   console.log(`Сервер запущено на порту ${process.env.PORT || 5000}`)
 })
-

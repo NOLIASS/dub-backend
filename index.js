@@ -54,6 +54,6 @@ app.post('/products', async (req, res) => {
   res.json(product)
 })
 
-app.listen(process.env.PORT, () => {
-  console.log(`Сервер запущено на порту ${process.env.PORT}`)
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Сервер запущено на порту ${process.env.PORT || 5000}`)
 })

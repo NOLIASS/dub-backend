@@ -10,7 +10,10 @@ const jwt = require('jsonwebtoken')
 
 const app = express()
 
-app.use(cors())
+app.use(cors({
+  origin: ['https://dub-furniture-teoz.vercel.app', 'http://localhost:5173'],
+  credentials: true
+}))
 app.use(express.json())
 
 const productSchema = new mongoose.Schema({
@@ -103,10 +106,10 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body
   const user = await User.findOne({ email })
   if (!user) return res.status(401).json({ message: 'Невірний email' })
-  
+
   const valid = await bcrypt.compare(password, user.password)
   if (!valid) return res.status(401).json({ message: 'Невірний пароль' })
-  
+
   const token = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,

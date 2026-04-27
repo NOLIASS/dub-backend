@@ -5,6 +5,8 @@ if (process.env.NODE_ENV !== 'production') {
 const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 const app = express()
 
@@ -23,6 +25,13 @@ const productSchema = new mongoose.Schema({
 })
 
 const Product = mongoose.model('Product', productSchema)
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: 'user' }
+})
+
+const User = mongoose.model('User', userSchema)
 
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
@@ -81,6 +90,37 @@ app.post('/products', async (req, res) => {
   await product.save()
   res.json(product)
 })
+app.post('/register', async (req, res) => {
+  const { email, password } = req.body
+  const hashed = await bcrypt.hash(password, 10)
+  const user = new User({ email, password: hashed })
+  await user.save()
+  res.json({ message: 'Користувач створений' })
+})
+
+// Логін
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body
+  const user = await User.findOne({ email })
+  if (!user) return res.status(401).json({ message: 'Невірний email' })
+  
+  const valid = await bcrypt.compare(password, user.password)
+  if (!valid) return res.status(401).json({ message: 'Невірний пароль' })
+  
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  )
+  res.json({ token })
+})
+
+
+
+
+
+
+
 
 app.listen(process.env.PORT || 5000, () => {
   console.log(`Сервер запущено на порту ${process.env.PORT || 5000}`)
